@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { getClinicalContent } from "@/config/goal-clinical-content";
 import { AREA_SUBAREAS } from "@/utils/goal-code-generator";
+import { API_BASE } from "@/lib/api";
 
 const BRAND_BLUE = "#E07A5F";
 const BRAND_TEAL = "#81B29A";
@@ -730,7 +731,7 @@ export default function NuevaSesion() {
   const { data: goalsRaw = [], isLoading: loadingGoals } = useQuery({
     queryKey: ["nueva-sesion-goals", patient?.id],
     queryFn: async () => {
-      const res = await fetch(`/api/goals?patientId=${patient.id}`);
+      const res = await fetch(`${API_BASE}/api/goals?patientId=${patient.id}`, { credentials: "include" });
       if (!res.ok) throw new Error();
       return res.json();
     },
@@ -744,7 +745,7 @@ export default function NuevaSesion() {
       if (bancoArea) params.append("area", bancoArea);
       if (bancoSubarea) params.append("subarea", bancoSubarea);
       if (bancoSearch.trim()) params.append("q", bancoSearch.trim());
-      const res = await fetch(`/api/goal-library?${params}`);
+      const res = await fetch(`${API_BASE}/api/goal-library?${params}`, { credentials: "include" });
       if (!res.ok) return [];
       return res.json();
     },
@@ -851,7 +852,7 @@ export default function NuevaSesion() {
     let cancelled = false;
     setLoadingDiagSug(true);
     const params = new URLSearchParams({ diagnosis: sessionDiagnosis, limit: "12" });
-    fetch(`/api/patients/${patient.id}/suggested-goals?${params}`)
+    fetch(`${API_BASE}/api/patients/${patient.id}/suggested-goals?${params}`)
       .then(r => r.json())
       .then(data => { if (!cancelled) setDiagSuggestions(Array.isArray(data) ? data : []); })
       .catch(() => { if (!cancelled) setDiagSuggestions([]); })
@@ -869,7 +870,7 @@ export default function NuevaSesion() {
   const fetchDetail = async (goalId: number) => {
     if (detailCache[goalId]) return;
     try {
-      const res = await fetch(`/api/goals/${goalId}/activities`);
+      const res = await fetch(`${API_BASE}/api/goals/${goalId}/activities`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setDetailCache(prev => ({ ...prev, [goalId]: data }));
@@ -883,7 +884,7 @@ export default function NuevaSesion() {
     if (adHocGoals.some((g: any) => g.nombreObjetivo === title)) return;
     setPhonemeAddingIdx(key);
     try {
-      const res = await fetch("/api/goal-library", {
+      const res = await fetch(`${API_BASE}/api/goal-library`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -999,7 +1000,7 @@ export default function NuevaSesion() {
     setAddingAiIdx(new Set());
     setAddedAiIdx(new Set());
     try {
-      const resp = await fetch("/api/ai/objetivos-suggest", {
+      const resp = await fetch(`${API_BASE}/api/ai/objetivos-suggest`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -1027,7 +1028,7 @@ export default function NuevaSesion() {
 
     setAddingAiIdx(prev => new Set([...prev, idx]));
     try {
-      const res = await fetch("/api/goal-library", {
+      const res = await fetch(`${API_BASE}/api/goal-library`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1219,7 +1220,7 @@ export default function NuevaSesion() {
     if (!canSave) return;
     setIsSaving(true);
     try {
-      const rcRes = await fetch("/api/registros-clinicos", {
+      const rcRes = await fetch(`${API_BASE}/api/registros-clinicos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1236,7 +1237,7 @@ export default function NuevaSesion() {
         await Promise.all(checkedGoals.map(goal => {
           const row = rows[goal.id] ?? defaultRow();
           const map = CLINICAL_PERFORMANCE_MAP[row.estado ?? "en proceso"] ?? CLINICAL_PERFORMANCE_MAP["en proceso"];
-          return fetch(`/api/goals/${goal.id}/progress`, {
+          return fetch(`${API_BASE}/api/goals/${goal.id}/progress`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1262,7 +1263,7 @@ export default function NuevaSesion() {
           if (alreadyAssigned) {
             goalId = alreadyAssigned.id;
           } else {
-            const assignRes = await fetch("/api/goals", {
+            const assignRes = await fetch(`${API_BASE}/api/goals`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -1283,7 +1284,7 @@ export default function NuevaSesion() {
             goalId = newGoal.id;
           }
 
-          await fetch(`/api/goals/${goalId}/progress`, {
+          await fetch(`${API_BASE}/api/goals/${goalId}/progress`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1348,7 +1349,7 @@ export default function NuevaSesion() {
       e.stopPropagation();
       setSavingToBank(true);
       try {
-        const res = await fetch(`/api/goal-library/${goalId}`, {
+        const res = await fetch(`${API_BASE}/api/goal-library/${goalId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ estadoBanco: "activo" }),

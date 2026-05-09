@@ -30,7 +30,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Wallet, TrendingUp, Receipt, Trash2 } from "lucide-react";
 
-const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+import { API_BASE } from "@/lib/api"; // cross-origin backend URL
 
 const MESES_ES: Record<string, string> = {
   "01": "Enero", "02": "Febrero", "03": "Marzo", "04": "Abril",

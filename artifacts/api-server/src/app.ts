@@ -12,11 +12,31 @@ const PgSession = connectPgSimple(session);
 
 const isProduction = process.env.NODE_ENV === "production";
 
+const ALLOWED_ORIGINS = [
+  "https://neurometric-terapias-backend.onrender.com",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+];
+
 const app: Express = express();
 
 app.set("trust proxy", 1);
 
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      ALLOWED_ORIGINS.includes(origin) ||
+      /\.netlify\.app$/.test(origin) ||
+      /\.onrender\.com$/.test(origin)
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -33,7 +53,7 @@ app.use(session({
     secure: isProduction,
     httpOnly: true,
     maxAge: 1000 * 60 * 60 * 24 * 7,
-    sameSite: "lax",
+    sameSite: isProduction ? "none" : "lax",
   },
 }));
 

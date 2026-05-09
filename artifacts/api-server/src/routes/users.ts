@@ -28,9 +28,13 @@ function userToJson(u: typeof usersTable.$inferSelect) {
 
 // GET /api/users — list all users (admin only)
 router.get("/users", async (req, res) => {
-  if (!req.session?.userId) return res.status(401).json({ error: "No autenticado" });
+  const sessionUserId = req.session?.userId;
+  const sessionRole   = req.session?.userRole;
+  console.log(`[GET /api/users] sessionUserId=${sessionUserId} role=${sessionRole}`);
+  if (!sessionUserId) return res.status(401).json({ error: "No autenticado" });
   if (!requireAdmin(req, res)) return;
   const users = await db.select().from(usersTable).orderBy(usersTable.name);
+  console.log(`[GET /api/users] returning ${users.length} users`);
   return res.json(users.map(userToJson));
 });
 

@@ -56,7 +56,17 @@ router.post("/auth/login", async (req, res) => {
   req.session.userEmail = user.email;
   req.session.userSpecialty = user.specialty ?? null;
 
-  return res.json(userToJson(user));
+  // Explicitly persist session to the PostgreSQL store BEFORE sending the
+  // response. Without this, the async DB write can race with the browser's
+  // immediate follow-up request (GET /api/auth/me), causing a 401.
+  req.session.save((err) => {
+    if (err) {
+      console.error("[auth/login] session.save error:", err);
+      return res.status(500).json({ error: "Error al guardar sesión" });
+    }
+    console.log(`[auth/login] sesión guardada userId=${user.id} role=${user.role}`);
+    return res.json(userToJson(user));
+  });
 });
 
 router.get("/auth/me", async (req, res) => {
